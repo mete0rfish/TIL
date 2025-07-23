@@ -78,3 +78,87 @@ Spring Webflux는 Netty 뿐만 아니라 Tomcat 위에서도 동작할 수 있�
 
 
 https://velog.io/@ksiisk99/spring2
+
+<br/>
+
+# 스프링 웹플럭스 기초
+## 개요
+### 리액티브 스트림
+- 리액티브 스트림으로 데이터 흐름을 관리하고 Back Pressure를 처리
+- 시스템의 리소스를 과부하 없이 효율적으로 관리할 수 있도록 함
+
+```java
+Flux<Integer> numberGenerator = Flux.range(1, 100)
+    .log()
+    .onBackpressureDrop(); // 백프레셔 발생 시 데이터 없애 버림
+
+    numberGenerator
+        .publishOn(Shcedulers.boundedElastic())
+        .subscribe(
+            number -> {
+                try {
+                    Thread.sleep(50);
+                } catch(InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Consumed: " + number);
+            },
+            error -> System.err.println("Error: " + error),
+            () -> System.out.println("Completed")
+        );
+```
+
+# 리액티브 스트림
+리액티브 프로그래밍의 비동기 데이터 스트림과 논 블로킹 백프레셔 표준 API 사양을 제공
+- Publisher: 데이터 생성 제공
+- Subscriber: 데이터 받아 처리
+- Subscription: 전달 받을 데이터 흐름 조절
+- Processor: Publisher 및 Subscriber의 기능 모두 포함
+
+구현체: RxJava, Reactor
+
+## Reactive 선언문
+![선언문](image/webflux1.png)
+
+## 구조
+![구조](image/webflux2.png)
+
+<br/>
+
+# 마블 다이어그램
+## 구조
+- 타임라인
+- 요소(데이터)
+    - 색깔에 따라 방출된다고 계산
+    - 동그라미가 아닌 요소들은 가공됨
+
+- 터미널
+    ![터미널](image/webflux3.png)
+- Input / Operator / Output
+    특정 가공 처리 결과 어떻게 되었는지 나타낼 때 사용
+    ![오퍼레이션](image/webflux4.png)
+    예를 들어 3번 요소는 가공 후 사라지고, 15번 요소는 가공 후 그대로고,...
+
+<br/>
+
+# Reactor
+Reactive Stream를 구현한 비동기 데이터 스트림 라이브러리
+Spring WebFlux에서 지원
+Backpressure 등의 기능 지원
+
+## Reactor Publisher 
+![CorePublisher](image/webflux5.png)
+
+## Mono
+0 .. 1개의 요소를 방출하는 Publisher 구현체 (방출하냐 안하냐)
+![mono](image/webflux6.png)
+
+요소를 방출 or 미방출하고 onComplete 시그널을 보냄
+
+## Flux
+![flux](image/webflux7.png)
+0~N개의 요소를 방출하는 Publisher 구현체
+onComplete 시그널을 방출하지 않도록 설정하여 무한히 방출하는 퍼블리셔 생성 가능
+
+# Reactor subscribe, buffer, take
+## subscribe()
