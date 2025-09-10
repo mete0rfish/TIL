@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GeoServer WMS 지도</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.1.0/ol.css">
+    <style>
+        /* 지도가 표시될 div 요소의 크기를 지정합니다. */
+        #map {
+            width: 100%;
+            height: 600px;
+        }
+        /* 컨트롤 영역 스타일 */
+        #controls {
+            margin-bottom: 8px;
+        }
+        #controls label {
+            margin-right: 15px; /* 라벨 간 간격 추가 */
+        }
+        
+        /* --- ⬇️ 추가된 부분: 팝업 스타일 ⬇️ --- */
+        .ol-popup {
+            position: absolute;
+            background-color: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cccccc;
+            bottom: 12px;
+            left: -50px;
+            min-width: 280px;
+        }
+        .ol-popup:after, .ol-popup:before {
+            top: 100%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+        .ol-popup:after {
+            border-top-color: white;
+            border-width: 10px;
+            left: 48px;
+            margin-left: -10px;
+        }
+        .ol-popup:before {
+            border-top-color: #cccccc;
+            border-width: 11px;
+            left: 48px;
+            margin-left: -11px;
+        }
+        .ol-popup-closer {
+            text-decoration: none;
+            position: absolute;
+            top: 2px;
+            right: 8px;
+        }
+        .ol-popup-closer:after {
+            content: "✖";
+        }
+    </style>
+</head>
+<body>
+    <h2>국가 지정 유산 지도</h2>
+
+    <div id="controls">
+        <input type="checkbox" id="layer-toggle" checked>
+        <label for="layer-toggle">국가지정유산 레이어 보기</label>
+
+        <input type="checkbox" id="basemap-toggle" checked>
+        <label for="basemap-toggle">배경 지도 보기</label>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="popup" class="ol-popup">
+        <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+        <div id="popup-content"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ol@v9.1.0/dist/ol.js"></script>
+    <script>
+        // --- ⬇️ 추가된 부분: 팝업 관련 요소 설정 ⬇️ ---
+        const container = document.getElementById('popup');
+        const content = document.getElementById('popup-content');
+        const closer = document.getElementById('popup-closer');
+
+        const overlay = new ol.Overlay({
+            element: container,
+            autoPan: {
+                animation: {
+                    duration: 250,
+                },
+            },
+        });
+
+        // GeoServer WMS 레이어 설정
+        const wmsSource = new ol.source.TileWMS({
+            url: 'http://localhost:8080/geoserver/wms', 
+            params: {
+                'LAYERS': 'test:국가지정유산', 
+                'TILED': true
+            },
+            serverType: 'geoserver',
+        });
+        const wmsLayer = new ol.layer.Tile({
+            source: wmsSource
+        });
+
+        // 배경 지도 (오픈스트리트맵)
+        const baseMap = new ol.layer.Tile({
+            source: new ol.source.OSM()
+        });
+        
+        // 대한민국 영역 정의
+        const koreaExtent4326 = [124.5, 33.0, 132.0, 38.8];
+        const koreaExtent3857 = ol.proj.transformExtent(koreaExtent4326, 'EPSG:4326', 'EPSG:3857');
+
+        // 지도 객체 생성
+        const map = new ol.Map({
+            target: 'map',
+            layers: [baseMap, wmsLayer],
+            overlays: [overlay], // ◀◀◀ 팝업 오버레이 추가
+            view: new ol.View({
+                center: ol.proj.fromLonLat([127.9, 36.5]),
+                zoom: 7.5,
+                extent: koreaExtent3857,
+                minZoom: 7
+            })
+        });
+
+        // 레이어 토글 기능
+        const layerToggleCheckbox = document.getElementById('layer-toggle');
+        layerToggleCheckbox.addEventListener('change', function() {
+            wmsLayer.setVisible(this.checked);
+        });
+
+        // 배경 지도 토글 기능
+        const basemapToggleCheckbox = document.getElementById('basemap-toggle');
+        basemapToggleCheckbox.addEventListener('change', function() {
+            baseMap.setVisible(this.checked);
+        });
+
+        // --- ⬇️ 추가된 부분: 팝업 닫기 및 지도 클릭 이벤트 ⬇️ ---
+
+        // 팝업 닫기 버튼 이벤트
+        closer.onclick = function () {
+            overlay.setPosition(undefined);
+            closer.blur();
+            return false;
+        };
+
+        // 지도 클릭 이벤트 처리
+        map.on('singleclick', function (evt) {
+            const viewResolution = map.getView().getResolution();
+            const coordinate = evt.coordinate;
+            
+            // GetFeatureInfo URL 생성
+            const url = wmsSource.getFeatureInfoUrl(
+                coordinate,
+                viewResolution,
+                'EPSG:3857',
+                {'INFO_FORMAT': 'application/json'}
+            );
+
+            if (url) {
+                fetch(url)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.features && data.features.length > 0) {
+                            const feature = data.features[0];
+                            const properties = feature.properties;
+                            
+                            let contentHtml = '<h4>속성 정보</h4><ul>';
+                            for (const key in properties) {
+                                contentHtml += `<li><b>${key}:</b> ${properties[key]}</li>`;
+                            }
+                            contentHtml += '</ul>';
+
+                            content.innerHTML = contentHtml;
+                            overlay.setPosition(coordinate);
+                        } else {
+                            overlay.setPosition(undefined);
+                        }
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
