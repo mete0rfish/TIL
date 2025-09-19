@@ -13,7 +13,7 @@
 ## 👥 그룹 스터디 일람표
 | 스터디 명 | 기간 | 스터디 링크 |
 |---------|-----|:--------:|
-| **AWS 교과서** | 24.02.12 ~ 24.03.24 | [링크](https://mud-wanderer-118.notion.site/AWS-ece02fb489db460980e6e88cd3ff74a5?source=copy_link) | 
+| **AWS 교과서** | 24.02.12 ~ 24.03.24 | [링크](https://mud-wanderer-118.notion.site/AWS-ece02fb489db460980e6e88cd3ff74a5?source=copy_link) |
 | **제대로 파는 Git & Github** | 24.07.13 ~ 24.07.24 | [링크](https://chivalrous-yard-10d.notion.site/Git-GitHub-37882df72d71409db200fd8b8ba685d5?source=copy_link) |
 | **데이터베이스 마스터** | 25.01.04 ~ 25.03.03 | [링크](https://acoustic-rest-b1b.notion.site/16564b4a4ab480ec8556dff4ee610feb?source=copy_link) |
 | **IT 엔지니어를 위한 네트워크 입문** | 25.06.02 ~ 25.07.05 | [링크](https://www.notion.so/IT-20a6c9b9848a80a1b1fbf6271dee1330?source=copy_link) |
