@@ -1,0 +1,3 @@
+[submodule "docs/밑바닥부터만드는컴파일러inGO/compiler_go"]
+	path = docs/밑바닥부터만드는컴파일러inGO/compiler_go
+	url = https://github.com/mete0rfish/compiler_go.git
