@@ -1,3 +1,3 @@
-# Welcome to Mete0rfish's TIL
+# Welcome to Meteorfish's TIL
 
-Select a topic from the sidebar to get started.
+목차에서 원하는 항목을 쉽게 찾을 수 있어요!
